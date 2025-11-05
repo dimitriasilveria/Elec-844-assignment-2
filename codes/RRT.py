@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 
 class RRT:
-    def __init__(self, start, goal, map_type, epsilon=0.01, step=2.5, goal_tolerance=1.0):
+    def __init__(self, start, goal, map_type,l=30, epsilon=0.01, step=2.5, goal_tolerance=1.0):
         self.start = start
         self.goal = goal
         self.epsilon = epsilon
@@ -15,7 +15,7 @@ class RRT:
         self.map_width = 100
         self.map = Map(self.map_width, self.map_height,step)
         if map_type == 1:
-            self.map.obstacles_one(30)
+            self.map.obstacles_one(l)
         elif map_type == 2:
             self.map.obstacles_two()
         elif map_type == 3:
@@ -23,6 +23,7 @@ class RRT:
         elif map_type == 4:
             self.map.obstacles_four()
 
+        self.path_length = 0
         self.V = [self.start]  # List of vertices
         self.E = {}      # Dictionary of edges
 
@@ -58,29 +59,36 @@ class RRT:
         step_size = min(self.step, length)  # Limit step size to self.step units
         q_new = np.array(q_near) + step_size * direction
         return (q_new[0], q_new[1])
-    
-    def search(self, max_iter=500):
-        for _ in range(max_iter):
+
+    def search(self, seed=None):
+        if seed is not None:
+            random.seed(seed)
+
+        i = 0
+        while 1:
             q_rand = self.sample()
             q_nearest = self.nearest(q_rand)
             q_new = self.steer(q_nearest, q_rand)
             if self.map.is_valid(q_nearest, q_new):
                 self.V.append(q_new)
-                self.E[q_new] = q_nearest
-
+                self.E[q_new] = [q_nearest,np.linalg.norm(np.array(q_new) - np.array(q_nearest))]
+            i += 1
             if  np.linalg.norm(np.array(q_new) - np.array(self.goal)) <= self.goal_tolerance:
                 print("Goal reached!")
-                return self.reconstruct_path(q_new)
+                return self.reconstruct_path(q_new), i
+            
         print("Goal not reached within max iterations.")
-        return None
+        return None, i
     
     def reconstruct_path(self, q_new):
         path = [self.goal]
         current = q_new
+        self.path_length = np.linalg.norm(np.array(self.goal) - np.array(q_new))
         while current != self.start:
             path.append(current)
             if current in self.E:
-                current = self.E[current]  # Move to the parent node
+                self.path_length += self.E[current][1]  # Add edge length to path length
+                current = self.E[current][0]  # Move to the parent node
             else:
                 break
         path.append(self.start)
@@ -102,6 +110,6 @@ class RRT:
 
 if __name__ == "__main__":
     rrt = RRT(start=(25, 50), goal=(75, 50), map_type=1)
-    path = rrt.search()
+    path, iterations = rrt.search()
     rrt.plot_path(path)
 
