@@ -2,10 +2,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 class Map:
-    def __init__(self, width, height):
+    def __init__(self, width, height, step=2.5):
         self.width = width
         self.height = height
-        self.obstacles = []        
+        self.step = step
+        self.obstacles = []
 
     def add_obstacle(self, obstacle):
         self.obstacles.append(obstacle)
@@ -40,15 +41,30 @@ class Map:
             if point[0] >= obs[0][0] and point[1] >= obs[0][1] and point[0] <= obs[1][0] and point[1] <= obs[1][1]:
                 return False
         return True
-    
-    def display(self):
-        fig, ax = plt.subplots()
+
+    def is_valid(self, q_nearest, q_new):
+        if not self.is_free(q_new):
+            return False
+        # Check the line segment between q_nearest and q_new for collisions
+        num_checks = int(np.ceil(np.linalg.norm(np.array(q_new) - np.array(q_nearest)))*20)
+        for i in range(1, num_checks + 1):
+            t = i / num_checks
+            intermediate_point = (q_nearest[0] + t * (q_new[0] - q_nearest[0]),
+                                  q_nearest[1] + t * (q_new[1] - q_nearest[1]))
+            if not self.is_free(intermediate_point):
+                return False
+        return True
+
+    def display(self, ax=None):
+        if ax is None:
+            fig, ax = plt.subplots()
         ax.set_xlim(0, self.width)
         ax.set_ylim(0, self.height)
         for obs in self.obstacles:
             rect = plt.Rectangle(obs[0], obs[1][0]-obs[0][0], obs[1][1]-obs[0][1], color='gray')
             ax.add_patch(rect)
-        plt.show()
+        return ax
+        # plt.show()
 
 if __name__ == "__main__":
     m = Map(100, 100)
