@@ -95,7 +95,7 @@ class RRT:
         path.reverse()
         return path
     
-    def plot_path(self, path):
+    def plot_path(self, path, fig_name="rrt_path.png"):
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
         xs, ys = zip(*self.V)
@@ -106,6 +106,7 @@ class RRT:
         plt.scatter([self.start[0]], [self.start[1]], c='green', s=50, label='Start')
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
         plt.legend()
+        plt.savefig(fig_name)
         plt.show()
 
 if __name__ == "__main__":

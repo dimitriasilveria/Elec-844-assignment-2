@@ -10,7 +10,7 @@ if __name__ == "__main__":
     #l =  25
    
     n_trials = 100
-    l = 25
+    # l = 25
     iterations_dict = {}
     vertices_dict = {}
     sol_length_dict = {}

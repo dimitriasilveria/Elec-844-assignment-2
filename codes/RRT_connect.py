@@ -31,6 +31,7 @@ class RRT_connect:
         self.V = None
         self.E = None
         self.is_start = True  # To alternate between trees
+        self.i = 0
 
 
     def connect(self, q_new, V, E):
@@ -39,6 +40,7 @@ class RRT_connect:
         is_connected = False
         while True:
             q_new_other = self.steer(q_near_other, q_new)
+            self.i += 1
             if self.map.is_valid(q_near_other,q_new_other):
                 q_last = q_near_other
                 V.append(q_new_other)
@@ -57,11 +59,11 @@ class RRT_connect:
         if self.is_start:
             self.is_start = False
             self.V_a, self.E_a, self.V_b, self.E_b = V_a, E_a, V_b, E_b
-            return self.V_a, self.E_a, self.V_b, self.E_b
+            return self.V_b, self.E_b, self.V_a, self.E_a
         else:
             self.is_start = True
             self.V_b, self.E_b, self.V_a, self.E_a = V_a, E_a, V_b, E_b
-            return self.V_b, self.E_b, self.V_a, self.E_a
+            return self.V_a, self.E_a, self.V_b, self.E_b
 
     def sample(self):
         # p = random.random()
@@ -99,7 +101,6 @@ class RRT_connect:
     def search(self, seed=None):
         if seed is not None:
             random.seed(seed)
-        i = 0
         V_a = self.V_a
         E_a = self.E_a
         V_b = self.V_b
@@ -108,11 +109,11 @@ class RRT_connect:
             q_rand = self.sample()
             q_nearest = self.nearest(q_rand, V_a)
             q_new = self.steer(q_nearest, q_rand)
+            self.i += 1
             if self.map.is_valid(q_nearest, q_new):
                 V_a.append(q_new)
                 E_a[q_new] = [q_nearest,np.linalg.norm(np.array(q_new) - np.array(q_nearest))]
                 V_b, E_b, is_connected, q_new_other = self.connect(q_new, V_b, E_b)
-            i += 1
             if is_connected:
                 self.V = V_a + V_b
                 print("Goal reached!")
@@ -128,30 +129,25 @@ class RRT_connect:
         path_start = []
         path_goal = []
         if self.is_start:
-            return None
-            # current = q_new
-            # while current != self.start:
-            #     path_start.append(current)
-            #     if current in self.E_a:
-            #         self.path_length += self.E_a[current][1]  # Add edge length to path length
-            #         current = self.E_a[current][0]  # Move to the parent node
-            #     else:
-            #         break
-            # path_start.append(self.start)
-            # path_start.reverse()
-            # current = q_new_other
-            # # k = 0
-            # while current != self.goal:
-            #     # k += 1
-            #     # print(k)
-            #     path_goal.append(current)
-            #     print(self.E_b[current])
-            #     if current in self.E_b:
-            #         self.path_length += self.E_b[current][1]  # Add edge length to path length
-            #         current = self.E_b[current][0]  # Move to the parent node
-            #     else:                    
-            #         break
-            # path_goal.append(self.goal)
+            current = q_new
+            while current != self.start:
+                path_start.append(current)
+                if current in self.E_a:
+                    self.path_length += self.E_a[current][1]  # Add edge length to path length
+                    current = self.E_a[current][0]  # Move to the parent node
+                else:
+                    break
+            path_start.append(self.start)
+            path_start.reverse()
+            current = q_new_other
+            while current != self.goal:
+                path_goal.append(current)
+                if current in self.E_b:
+                    self.path_length += self.E_b[current][1]  # Add edge length to path length
+                    current = self.E_b[current][0]  # Move to the parent node
+                else:                    
+                    break
+            path_goal.append(self.goal)
         else:
             current = q_new_other
             while current != self.start:
@@ -161,7 +157,6 @@ class RRT_connect:
                     current = self.E_a[current][0]  # Move to the parent node
                 else:
                     break
-            
             path_start.append(self.start)
             path_start.reverse()
             current = q_new
