@@ -35,21 +35,23 @@ class RRT_connect:
 
     def connect(self, q_new, V, E):
         q_near_other = self.nearest(q_new, V)
+        q_last = q_near_other
         is_connected = False
         while True:
             q_new_other = self.steer(q_near_other, q_new)
             if self.map.is_valid(q_near_other,q_new_other):
+                q_last = q_near_other
                 V.append(q_new_other)
                 E[q_new_other] = [q_near_other,np.linalg.norm(np.array(q_new_other) - np.array(q_near_other))]
                 if np.linalg.norm(np.array(q_new_other) - np.array(q_new)) <= self.goal_tolerance:
-                    E[q_near_other] = [q_new,np.linalg.norm(np.array(q_near_other) - np.array(q_new))]
+                    # E[q_near_other] = [q_new,np.linalg.norm(np.array(q_near_other) - np.array(q_new))]
                     is_connected = True
                     break
                 q_near_other = q_new_other
 
             else:
                 break
-        return V, E, is_connected, q_new_other
+        return V, E, is_connected, q_last
     
     def swap_trees(self, V_a, E_a, V_b, E_b):
         if self.is_start:
@@ -62,17 +64,17 @@ class RRT_connect:
             return self.V_b, self.E_b, self.V_a, self.E_a
 
     def sample(self):
-        p = random.random()
-        if p < self.epsilon:
-            return self.goal
-        else:
-            is_free = False
-            while not is_free:
-                x = random.uniform(0, self.map.width)
-                y = random.uniform(0, self.map.height)
-                if self.map.is_free((x, y)):
-                    is_free = True
-                    return (x, y)
+        # p = random.random()
+        # if p < self.epsilon:
+        #     return self.goal
+        # else:
+        is_free = False
+        while not is_free:
+            x = random.uniform(0, self.map.width)
+            y = random.uniform(0, self.map.height)
+            if self.map.is_free((x, y)):
+                is_free = True
+                return (x, y)
                 
     def nearest(self, q_rand, V):
         min_dist = np.inf
@@ -126,55 +128,61 @@ class RRT_connect:
         path_start = []
         path_goal = []
         if self.is_start:
-            current = q_new
-            while current != self.start:
-                path_start.append(current)
-                if current in self.E_a:
-                    self.path_length += self.E_a[current][1]  # Add edge length to path length
-                    current = self.E_a[current][0]  # Move to the parent node
-                else:
-                    path_start.append(self.start)
-                    break
-            path_start.reverse()
-            current = q_new_other
-            while current != self.goal:
-                path_goal.append(current)
-                if current in self.E_b:
-                    self.path_length += self.E_b[current][1]  # Add edge length to path length
-                    current = self.E_b[current][0]  # Move to the parent node
-                else:
-                    path_goal.append(self.goal)
-                    break
+            return None
+            # current = q_new
+            # while current != self.start:
+            #     path_start.append(current)
+            #     if current in self.E_a:
+            #         self.path_length += self.E_a[current][1]  # Add edge length to path length
+            #         current = self.E_a[current][0]  # Move to the parent node
+            #     else:
+            #         break
+            # path_start.append(self.start)
+            # path_start.reverse()
+            # current = q_new_other
+            # # k = 0
+            # while current != self.goal:
+            #     # k += 1
+            #     # print(k)
+            #     path_goal.append(current)
+            #     print(self.E_b[current])
+            #     if current in self.E_b:
+            #         self.path_length += self.E_b[current][1]  # Add edge length to path length
+            #         current = self.E_b[current][0]  # Move to the parent node
+            #     else:                    
+            #         break
+            # path_goal.append(self.goal)
         else:
             current = q_new_other
             while current != self.start:
                 path_start.append(current)
-                if current in self.E_b:
-                    self.path_length += self.E_b[current][1]  # Add edge length to path length
-                    current = self.E_b[current][0]  # Move to the parent node
-                else:
-                    path_goal.append(self.goal)
-                    break
-            path_start.reverse()
-            current = q_new
-            while current != self.goal:
-                path_goal.append(current)
                 if current in self.E_a:
                     self.path_length += self.E_a[current][1]  # Add edge length to path length
                     current = self.E_a[current][0]  # Move to the parent node
                 else:
-                    path_goal.append(self.goal)
                     break
-        # print('paths', path_start, path_goal)
-        # input()
+            
+            path_start.append(self.start)
+            path_start.reverse()
+            current = q_new
+            while current != self.goal:
+                path_goal.append(current)
+                if current in self.E_b:
+                    self.path_length += self.E_b[current][1]  # Add edge length to path length
+                    current = self.E_b[current][0]  # Move to the parent node
+                else:
+                    
+                    break
+        path_goal.append(self.goal)
         return path_start + path_goal
 
     def plot_path(self, path, fig_name="rrt_path.png"):
+        if path is None:
+            print("No path to plot.")
+            return
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
         xs, ys = zip(*self.V)
-        print(xs, ys)
-        input()
         ax.scatter(xs, ys, c='blue', s=5)
         if path:
             path_xs, path_ys = zip(*path)
