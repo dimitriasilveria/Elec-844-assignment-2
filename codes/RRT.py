@@ -107,7 +107,7 @@ class RRT:
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
         plt.legend()
         plt.savefig(fig_name)
-        plt.show()
+        # plt.show()
 
 if __name__ == "__main__":
     rrt = RRT(start=(25, 50), goal=(75, 50), map_type=1)

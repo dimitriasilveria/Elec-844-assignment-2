@@ -121,7 +121,7 @@ class RRT_connect:
                     self.V_a, self.E_a, self.V_b, self.E_b = V_a, E_a, V_b, E_b
                 else:
                     self.V_b, self.E_b, self.V_a, self.E_a = V_a, E_a, V_b, E_b
-                return self.reconstruct_path(q_new, q_new_other), i
+                return self.reconstruct_path(q_new, q_new_other), self.i
             
             V_a, E_a, V_b, E_b = self.swap_trees(V_a, E_a, V_b, E_b)
 
@@ -186,7 +186,7 @@ class RRT_connect:
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
         plt.legend()
         plt.savefig(fig_name)
-        plt.show()
+        # plt.show()
 
 if __name__ == "__main__":
     rrt = RRT_connect(start=(25, 50), goal=(75, 50), map_type=1)
