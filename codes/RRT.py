@@ -73,7 +73,7 @@ class RRT:
                 self.V.append(q_new)
                 self.E[q_new] = [q_nearest,np.linalg.norm(np.array(q_new) - np.array(q_nearest))]
             i += 1
-            if  np.linalg.norm(np.array(q_new) - np.array(self.goal)) <= self.goal_tolerance:
+            if  q_new == self.goal:
                 print("Goal reached!")
                 return self.reconstruct_path(q_new), i
             
@@ -105,9 +105,11 @@ class RRT:
             ax.plot(path_xs, path_ys, c='red', linewidth=2)
         plt.scatter([self.start[0]], [self.start[1]], c='green', s=50, label='Start')
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
+        for child, (parent, _) in self.E.items():
+            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         plt.legend()
         plt.savefig(fig_name)
-        # plt.show()
+        plt.show()
 
 if __name__ == "__main__":
     rrt = RRT(start=(25, 50), goal=(75, 50), map_type=1)

@@ -51,7 +51,7 @@ def run_rrt_experiments(l, n_trials, result_folder, picture_folder, search_algor
     #plotting histograms
 
     plt.figure()
-    plt.hist(iterations_sorted.values(), bins=20, color='blue', alpha=0.7)
+    plt.hist(iterations_sorted.values(), bins=10, color='blue', alpha=0.7)
     plt.title(f'Histogram of Iterations to Reach Goal (search_algorithm={search_algorithm})')
     plt.xlabel('Iterations')
     plt.ylabel('Frequency')

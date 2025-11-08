@@ -184,9 +184,13 @@ class RRT_connect:
             ax.plot(path_xs, path_ys, c='red', linewidth=2)
         plt.scatter([self.start[0]], [self.start[1]], c='green', s=50, label='Start')
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
+        for child, (parent, _) in self.E_a.items():
+            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
+        for child, (parent, _) in self.E_b.items():
+            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         plt.legend()
         plt.savefig(fig_name)
-        # plt.show()
+        plt.show()
 
 if __name__ == "__main__":
     rrt = RRT_connect(start=(25, 50), goal=(75, 50), map_type=1)
