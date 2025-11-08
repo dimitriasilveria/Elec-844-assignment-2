@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     #l =  25
    
-    n_trials = 10
+    n_trials = 100
     run_rrt_experiments(l=25, n_trials=n_trials, result_folder="results_number_2", picture_folder="pictures_number_2", search_algorithm='RRT', map_type=2)
     run_rrt_experiments(l=25, n_trials=n_trials, result_folder="results_number_2", picture_folder="pictures_number_2", search_algorithm='RRT_connect', map_type=2)
     run_rrt_experiments(l=25, n_trials=n_trials, result_folder="results_number_2", picture_folder="pictures_number_2", search_algorithm='RRT', map_type=3)
