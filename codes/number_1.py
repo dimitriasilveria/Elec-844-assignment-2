@@ -1,4 +1,4 @@
-from RRT import RRT
+from RRT_star import RRT_star
 import numpy as np
 import yaml
 import statistics
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     vertices_dict = {}
     sol_length_dict = {}
     for i in range(n_trials):
-        rrt = RRT(start=(25, 50), goal=(75, 50), map_type=1, l=l)
+        rrt = RRT_star(start=(25, 50), goal=(75, 50), map_type=1, l=l)
         path, iterations = rrt.search(seed=i)
         iterations_dict[i] = iterations
         vertices_dict[i] = len(rrt.V)

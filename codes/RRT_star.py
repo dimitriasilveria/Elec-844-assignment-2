@@ -14,7 +14,6 @@ class RRT_star:
         self.goal_tolerance = goal_tolerance
         self.map_height = 100
         self.map_width = 100
-        self.near_radius = 10.0
         self.path_length_500 = 0
         self.path_length_1000 = 0
         self.path_length_2500 = 0
@@ -122,10 +121,13 @@ class RRT_star:
             q_new = self.steer(q_nearest, q_rand)
             if i == 499:
                 self.path_length_500 = self.cost_to_come(q_nearest) + np.linalg.norm(np.array(q_new) - np.array(q_nearest))
+                self.plot_search_tree(fig_name=f"rrt_star_search_tree_iter_500.png")
             if i == 999:
                 self.path_length_1000 = self.cost_to_come(q_nearest) + np.linalg.norm(np.array(q_new) - np.array(q_nearest))
+                self.plot_search_tree(fig_name=f"rrt_star_search_tree_iter_1000.png")
             if i == 2499:
                 self.path_length_2500 = self.cost_to_come(q_nearest) + np.linalg.norm(np.array(q_new) - np.array(q_nearest))
+                self.plot_search_tree(fig_name=f"rrt_star_search_tree_iter_2500.png")
             if self.map.is_valid(q_nearest, q_new):
                 neighbors = self.neighborhood(q_new)
                 q_best = self.best_parent(q_new, neighbors)
@@ -134,7 +136,7 @@ class RRT_star:
                 self.rewire(q_new, neighbors)
             i += 1
             if  q_new == self.goal:
-                print("Goal reached!")
+                print(f"Goal reached with {i} iterations!")
                 return self.reconstruct_path(q_new), i
             
         print("Goal not reached within max iterations.")
@@ -171,8 +173,21 @@ class RRT_star:
         plt.savefig(fig_name)
         plt.show()
 
+    def plot_search_tree(self, fig_name="rrt_search_tree.png"):
+        fig, ax = plt.subplots()
+        ax = self.map.display(ax)
+        xs, ys = zip(*self.V)
+        ax.scatter(xs, ys, c='blue', s=5)
+        plt.scatter([self.start[0]], [self.start[1]], c='green', s=50, label='Start')
+        plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
+        for child, (parent, _) in self.E.items():
+            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
+        plt.legend()
+        plt.savefig(fig_name)
+        plt.show()
+
 if __name__ == "__main__":
-    rrt = RRT_star(start=(25, 50), goal=(75, 50), map_type=1)
+    rrt = RRT_star(l = 25, start=(25, 50), goal=(75, 50), map_type=1)
     path, iterations = rrt.search()
     rrt.plot_path(path)
 
