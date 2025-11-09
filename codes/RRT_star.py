@@ -4,6 +4,7 @@ from Maps import Map
 import matplotlib.pyplot as plt
 from scipy.spatial import KDTree
 import math
+import os
 
 class RRT_star:
     def __init__(self, start, goal, map_type,l=30, epsilon=0.01, step=2.5, goal_tolerance=1.0):
@@ -26,10 +27,13 @@ class RRT_star:
             self.map.obstacles_three()
         elif map_type == 4:
             self.map.obstacles_four()
-
+        self.goal_found = False
         self.path_length = 0
         self.V = [self.start]  # List of vertices
         self.E = {}      # Dictionary of edges
+
+        self.pictures_dir = "pictures_number_3/"
+        os.makedirs(self.pictures_dir, exist_ok=True)
 
     def sample(self):
         p = random.random()
@@ -71,12 +75,13 @@ class RRT_star:
         best_cost = np.inf
         best_parent = None
         for neighbor in neighbors:
-            cost_q = self.E[neighbor][1] if neighbor in self.E else 0
-            dist = np.linalg.norm(np.array(q_new) - np.array(neighbor))
-            total_cost = cost_q + dist
-            if total_cost < best_cost and self.map.is_valid(neighbor, q_new):
-                best_cost = total_cost
-                best_parent = neighbor
+            if neighbor != self.goal:
+                cost_q = self.E[neighbor][1] if neighbor in self.E else 0
+                dist = np.linalg.norm(np.array(q_new) - np.array(neighbor))
+                total_cost = cost_q + dist
+                if total_cost < best_cost and self.map.is_valid(neighbor, q_new):
+                    best_cost = total_cost
+                    best_parent = neighbor
         return best_parent
 
     def steer(self, q_near, q_rand):
@@ -94,58 +99,73 @@ class RRT_star:
         current = q
         while current != self.start:
             if current in self.E:
+                # print(f"Current node: {current}, Parent: {self.E[current][0]}")
                 cost += self.E[current][1]
                 current = self.E[current][0]
             else:
                 break
         return cost
-    
+
     def rewire(self, q_new, neighbors):
         cost_new = self.cost_to_come(q_new)
         for neighbor in neighbors:
-            if neighbor == self.start:
+            if neighbor  == self.start:
                 continue  # Don't rewire the start node
             dist_new_neigh = np.linalg.norm(np.array(q_new) - np.array(neighbor))
             tentative_cost = cost_new + dist_new_neigh
-            current_cost = self.E[neighbor][1] if neighbor in self.E else 0
-            if tentative_cost < current_cost and self.map.is_valid(q_new, neighbor):
-                self.E[neighbor] = [q_new, tentative_cost]
-
+            current_cost = self.cost_to_come(neighbor)
+            if self.map.is_valid(q_new, neighbor) and tentative_cost < current_cost:
+                self.E[neighbor] = [q_new, dist_new_neigh]
+                    
     def search(self, seed=None):
         if seed is not None:
             random.seed(seed)
 
         for i in range(2500):
+            print(f"Iteration {i+1}/2500", end='\r')
             q_rand = self.sample()
             q_nearest = self.nearest(q_rand)
             q_new = self.steer(q_nearest, q_rand)
             if i == 499:
-                self.path_length_500 = self.cost_to_come(q_nearest) + np.linalg.norm(np.array(q_new) - np.array(q_nearest))
-                self.plot_search_tree(fig_name=f"rrt_star_search_tree_iter_500.png")
+                if self.goal_found:
+                    self.path_length_500 = self.cost_to_come(self.goal)
+                else:
+                    self.path_length_500 = np.inf
+                self.plot_search_tree(fig_name=f"{self.pictures_dir}/rrt_star_search_tree_iter_500.png")
             if i == 999:
-                self.path_length_1000 = self.cost_to_come(q_nearest) + np.linalg.norm(np.array(q_new) - np.array(q_nearest))
-                self.plot_search_tree(fig_name=f"rrt_star_search_tree_iter_1000.png")
+                if self.goal_found:
+                    self.path_length_1000 = self.cost_to_come(self.goal) 
+                else:
+                    self.path_length_1000 = np.inf
+                self.plot_search_tree(fig_name=f"{self.pictures_dir}/rrt_star_search_tree_iter_1000.png")
             if i == 2499:
-                self.path_length_2500 = self.cost_to_come(q_nearest) + np.linalg.norm(np.array(q_new) - np.array(q_nearest))
-                self.plot_search_tree(fig_name=f"rrt_star_search_tree_iter_2500.png")
+                if self.goal_found:
+                    self.path_length_2500 = self.cost_to_come(self.goal)
+                else:
+                    self.path_length_2500 = np.inf
+                self.plot_search_tree(fig_name=f"{self.pictures_dir}/rrt_star_search_tree_iter_2500.png")
             if self.map.is_valid(q_nearest, q_new):
                 neighbors = self.neighborhood(q_new)
                 q_best = self.best_parent(q_new, neighbors)
                 self.V.append(q_new)
                 self.E[q_new] = [q_best,self.cost_to_come(q_best) + np.linalg.norm(np.array(q_new) - np.array(q_best))]
-                self.rewire(q_new, neighbors)
-            i += 1
+                if q_new != self.goal:
+                    self.rewire(q_new, neighbors)
             if  q_new == self.goal:
-                print(f"Goal reached with {i} iterations!")
-                return self.reconstruct_path(q_new), i
-            
-        print("Goal not reached within max iterations.")
-        return None, i
-    
-    def reconstruct_path(self, q_new):
+                self.goal_found = True
+                # print(f"Goal reached with {i} iterations!")
+        print('Search complete.')
+        if self.goal_found:
+            return self.reconstruct_path(), i
+        else:
+            print("Goal not reached within max iterations.")
+            self.path_length = np.inf
+            return None, i
+
+    def reconstruct_path(self):
         path = [self.goal]
-        current = q_new
-        self.path_length = np.linalg.norm(np.array(self.goal) - np.array(q_new)) + self.cost_to_come(q_new)
+        current = self.goal
+        self.path_length = self.cost_to_come(self.goal)
         while current != self.start:
             path.append(current)
             if current in self.E:
@@ -155,7 +175,7 @@ class RRT_star:
         path.append(self.start)
         path.reverse()
         return path
-    
+
     def plot_path(self, path, fig_name="rrt_path.png"):
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
@@ -171,7 +191,8 @@ class RRT_star:
             plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         plt.legend()
         plt.savefig(fig_name)
-        plt.show()
+        plt.close()
+        # plt.show()
 
     def plot_search_tree(self, fig_name="rrt_search_tree.png"):
         fig, ax = plt.subplots()
@@ -184,7 +205,8 @@ class RRT_star:
             plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         plt.legend()
         plt.savefig(fig_name)
-        plt.show()
+        plt.close()
+        # plt.show()
 
 if __name__ == "__main__":
     rrt = RRT_star(l = 25, start=(25, 50), goal=(75, 50), map_type=1)
