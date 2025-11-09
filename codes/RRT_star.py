@@ -15,9 +15,13 @@ class RRT_star:
         self.goal_tolerance = goal_tolerance
         self.map_height = 100
         self.map_width = 100
-        self.path_length_500 = 0
-        self.path_length_1000 = 0
-        self.path_length_2500 = 0
+        self.path_length_500 = np.inf
+        self.path_length_1000 = np.inf
+        self.path_length_2500 = np.inf
+        self.path_length = np.inf
+        self.path_500 = None
+        self.path_1000 = None
+        self.path_2500 = None
         self.map = Map(self.map_width, self.map_height,step)
         if map_type == 1:
             self.map.obstacles_one(l)
@@ -28,11 +32,11 @@ class RRT_star:
         elif map_type == 4:
             self.map.obstacles_four()
         self.goal_found = False
-        self.path_length = 0
+
         self.V = [self.start]  # List of vertices
         self.E = {}      # Dictionary of edges
 
-        self.pictures_dir = "pictures_number_3/"
+        self.pictures_dir = "pictures_number_3"
         os.makedirs(self.pictures_dir, exist_ok=True)
 
     def sample(self):
@@ -76,7 +80,7 @@ class RRT_star:
         best_parent = None
         for neighbor in neighbors:
             if neighbor != self.goal:
-                cost_q = self.E[neighbor][1] if neighbor in self.E else 0
+                cost_q = self.cost_to_come(neighbor)
                 dist = np.linalg.norm(np.array(q_new) - np.array(neighbor))
                 total_cost = cost_q + dist
                 if total_cost < best_cost and self.map.is_valid(neighbor, q_new):
@@ -100,7 +104,7 @@ class RRT_star:
         while current != self.start:
             if current in self.E:
                 # print(f"Current node: {current}, Parent: {self.E[current][0]}")
-                cost += self.E[current][1]
+                cost += np.linalg.norm(np.array(current) - np.array(self.E[current][0]))
                 current = self.E[current][0]
             else:
                 break
@@ -129,21 +133,15 @@ class RRT_star:
             if i == 499:
                 if self.goal_found:
                     self.path_length_500 = self.cost_to_come(self.goal)
-                else:
-                    self.path_length_500 = np.inf
-                self.plot_search_tree(fig_name=f"{self.pictures_dir}/rrt_star_search_tree_iter_500.png")
+                    self.path_500 = self.reconstruct_path()
             if i == 999:
                 if self.goal_found:
-                    self.path_length_1000 = self.cost_to_come(self.goal) 
-                else:
-                    self.path_length_1000 = np.inf
-                self.plot_search_tree(fig_name=f"{self.pictures_dir}/rrt_star_search_tree_iter_1000.png")
+                    self.path_length_1000 = self.cost_to_come(self.goal)
+                    self.path_1000 = self.reconstruct_path()
             if i == 2499:
                 if self.goal_found:
                     self.path_length_2500 = self.cost_to_come(self.goal)
-                else:
-                    self.path_length_2500 = np.inf
-                self.plot_search_tree(fig_name=f"{self.pictures_dir}/rrt_star_search_tree_iter_2500.png")
+                    self.path_2500 = self.reconstruct_path()
             if self.map.is_valid(q_nearest, q_new):
                 neighbors = self.neighborhood(q_new)
                 q_best = self.best_parent(q_new, neighbors)
@@ -176,7 +174,7 @@ class RRT_star:
         path.reverse()
         return path
 
-    def plot_path(self, path, fig_name="rrt_path.png"):
+    def plot_path(self, path, fig_name="rrt_path.pdf"):
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
         xs, ys = zip(*self.V)
@@ -194,7 +192,7 @@ class RRT_star:
         plt.close()
         # plt.show()
 
-    def plot_search_tree(self, fig_name="rrt_search_tree.png"):
+    def plot_search_tree(self, fig_name="rrt_search_tree.pdf"):
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
         xs, ys = zip(*self.V)
