@@ -52,12 +52,13 @@ if __name__ == "__main__":
     for i in range(n_trials):
         print(f"Starting trial {i+1}")
         rrt = RRT_star(start=(25, 50), goal=(75, 50), map_type=1, l=l)
+        path, iter_count = rrt.search(seed=i)
         if not has_plots and rrt.path_500 is not None:
+
             rrt.plot_path(rrt.path_500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_500_trial_{i+1}.pdf")
             rrt.plot_path(rrt.path_1000, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_1000_trial_{i+1}.pdf")
             rrt.plot_path(rrt.path_2500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_2500_trial_{i+1}.pdf")    
             has_plots = True
-        path, iter_count = rrt.search(seed=i)
         iterations.append(iter_count)
         vertices.append(len(rrt.V))
         sol_length.append(rrt.path_length)
