@@ -105,8 +105,8 @@ if __name__ == "__main__":
         'percentage_trials_no_path_1000_iterations': str(percentage_1000),
         'percentage_trials_no_path_2500_iterations': str(percentage_2500),
     }
-    # with open(f"{results_dir}/results_l_{l}.yaml", "w") as f:
-    #     yaml.dump(results_dict, f)
+    with open(f"{results_dir}/results_l_{l}.yaml", "w") as f:
+        yaml.dump(results_dict, f)
 
     #eliminate infinite values for plotting histograms
     # Separate finite and infinite values

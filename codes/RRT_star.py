@@ -200,14 +200,15 @@ class RRT_star:
         ax = self.map.display(ax)
         xs, ys = zip(*V)
         ax.scatter(xs, ys, c='blue', s=5)
+        for child, (parent, _) in E.items():
+            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         if path:
             path_xs, path_ys = zip(*path)
             ax.plot(path_xs, path_ys, c='red', linewidth=2)
         plt.scatter([self.start[0]], [self.start[1]], c='green', s=50, label='Start')
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
         #plotting the entire tree
-        for child, (parent, _) in E.items():
-            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
+
         plt.legend()
         plt.savefig(fig_name)
         plt.close()
