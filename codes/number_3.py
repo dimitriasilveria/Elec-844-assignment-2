@@ -40,7 +40,7 @@ if __name__ == "__main__":
 
     #l =  25
    
-    n_trials = 1
+    n_trials = 100
     l = 25
     iterations = []
     vertices = []
@@ -52,13 +52,13 @@ if __name__ == "__main__":
     for i in range(n_trials):
         print(f"Starting trial {i+1}")
         rrt = RRT_star(start=(25, 50), goal=(75, 50), map_type=1, l=l)
-        path, iter_count = rrt.search(seed=i)
+        path, iter_count = rrt.search(seed=2*i)
         if not has_plots and rrt.path_500 is not None:
 
-            rrt.plot_path(rrt.path_500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_500_trial_{i+1}.pdf")
-            rrt.plot_path(rrt.path_1000, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_1000_trial_{i+1}.pdf")
-            rrt.plot_path(rrt.path_2500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_2500_trial_{i+1}.pdf")    
-            has_plots = True
+            rrt.plot_path(rrt.path_500, rrt.E_500, rrt.V_500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_500_trial_{i+1}.pdf")
+            rrt.plot_path(rrt.path_1000, rrt.E_1000, rrt.V_1000, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_1000_trial_{i+1}.pdf")
+            rrt.plot_path(rrt.path_2500, rrt.E_2500, rrt.V_2500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_2500_trial_{i+1}.pdf")
+            # has_plots = True
         iterations.append(iter_count)
         vertices.append(len(rrt.V))
         sol_length.append(rrt.path_length)
@@ -105,8 +105,8 @@ if __name__ == "__main__":
         'percentage_trials_no_path_1000_iterations': str(percentage_1000),
         'percentage_trials_no_path_2500_iterations': str(percentage_2500),
     }
-    with open(f"{results_dir}/results_l_{l}.yaml", "w") as f:
-        yaml.dump(results_dict, f)
+    # with open(f"{results_dir}/results_l_{l}.yaml", "w") as f:
+    #     yaml.dump(results_dict, f)
 
     #eliminate infinite values for plotting histograms
     # Separate finite and infinite values
@@ -118,7 +118,7 @@ if __name__ == "__main__":
     num_infinite_2500 = sum(v == np.inf for v in path_lengths_2500)
     #plotting histograms
     plt.figure()
-    counts, bins, patches = plt.hist(path_lengths_500_sorted, bins=20, color='blue', alpha=0.7)
+    counts, bins, patches = plt.hist(path_lengths_500_sorted, bins=10, color='blue', alpha=0.7)
     inf_bin_position = bins[-1] + (bins[-1] - bins[-2])
     plt.bar(inf_bin_position, num_infinite_500, width=(bins[-1] - bins[-2]), color='blue', alpha=0.7, edgecolor='black')
     plt.xticks(list(bins) + [inf_bin_position], [f"{b:.2f}" for b in bins] + [r'$\infty$'], rotation=45)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     plt.savefig(f"{rrt.pictures_dir}/path_lengths_500_histogram.pdf")
 
     plt.figure()
-    counts, bins, patches = plt.hist(path_lengths_1000_sorted, bins=20, color='blue', alpha=0.7)
+    counts, bins, patches = plt.hist(path_lengths_1000_sorted, bins=10, color='blue', alpha=0.7)
     inf_bin_position = bins[-1] + (bins[-1] - bins[-2])
     plt.bar(inf_bin_position, num_infinite_1000, width=(bins[-1] - bins[-2]), color='blue', alpha=0.7, edgecolor='black')
     plt.xticks(list(bins) + [inf_bin_position], [f"{b:.2f}" for b in bins] + [r'$\infty$'], rotation=45)
@@ -138,7 +138,7 @@ if __name__ == "__main__":
     plt.savefig(f"{rrt.pictures_dir}/path_lengths_1000_histogram.pdf")
 
     plt.figure()
-    counts, bins, patches = plt.hist(path_lengths_2500_sorted, bins=20, color='blue', alpha=0.7)
+    counts, bins, patches = plt.hist(path_lengths_2500_sorted, bins=10, color='blue', alpha=0.7)
     inf_bin_position = bins[-1] + (bins[-1] - bins[-2])
     plt.bar(inf_bin_position, num_infinite_2500, width=(bins[-1] - bins[-2]), color='blue', alpha=0.7, edgecolor='black')
     plt.xticks(list(bins) + [inf_bin_position], [f"{b:.2f}" for b in bins] + [r'$\infty$'], rotation=45)

@@ -7,12 +7,11 @@ import math
 import os
 
 class RRT_star:
-    def __init__(self, start, goal, map_type,l=30, epsilon=0.01, step=2.5, goal_tolerance=1.0):
+    def __init__(self, start, goal, map_type,l=30, epsilon=0.01, step=2.5):
         self.start = start
         self.goal = goal
         self.epsilon = epsilon
         self.step = step
-        self.goal_tolerance = goal_tolerance
         self.map_height = 100
         self.map_width = 100
         self.path_length_500 = np.inf
@@ -22,6 +21,12 @@ class RRT_star:
         self.path_500 = None
         self.path_1000 = None
         self.path_2500 = None
+        self.E_500 = []
+        self.E_1000 = []
+        self.E_2500 = []
+        self.V_500 = []
+        self.V_1000 = []
+        self.V_2500 = []
         self.map = Map(self.map_width, self.map_height,step)
         if map_type == 1:
             self.map.obstacles_one(l)
@@ -89,6 +94,8 @@ class RRT_star:
         return best_parent
 
     def steer(self, q_near, q_rand):
+        if q_rand == self.goal and np.linalg.norm(np.array(q_rand) - np.array(q_near)) <= self.step:
+            return q_rand
         direction = np.array(q_rand) - np.array(q_near)
         length = np.linalg.norm(direction)
         if length == 0:
@@ -120,7 +127,27 @@ class RRT_star:
             current_cost = self.cost_to_come(neighbor)
             if self.map.is_valid(q_new, neighbor) and tentative_cost < current_cost:
                 self.E[neighbor] = [q_new, dist_new_neigh]
-                    
+
+    def get_stats(self, i):
+        if i == 499:
+            if self.goal_found:
+                self.path_length_500 = self.cost_to_come(self.goal)
+                self.path_500 = self.reconstruct_path()
+                self.E_500 = self.E.copy()
+                self.V_500 = self.V.copy()
+        if i == 999:
+            if self.goal_found:
+                self.path_length_1000 = self.cost_to_come(self.goal)
+                self.path_1000 = self.reconstruct_path()
+                self.E_1000 = self.E.copy()
+                self.V_1000 = self.V.copy()
+        if i == 2499:
+            if self.goal_found:
+                self.path_length_2500 = self.cost_to_come(self.goal)
+                self.path_2500 = self.reconstruct_path()
+                self.E_2500 = self.E.copy()
+                self.V_2500 = self.V.copy()   
+
     def search(self, seed=None):
         if seed is not None:
             random.seed(seed)
@@ -130,27 +157,21 @@ class RRT_star:
             q_rand = self.sample()
             q_nearest = self.nearest(q_rand)
             q_new = self.steer(q_nearest, q_rand)
-            if i == 499:
-                if self.goal_found:
-                    self.path_length_500 = self.cost_to_come(self.goal)
-                    self.path_500 = self.reconstruct_path()
-            if i == 999:
-                if self.goal_found:
-                    self.path_length_1000 = self.cost_to_come(self.goal)
-                    self.path_1000 = self.reconstruct_path()
-            if i == 2499:
-                if self.goal_found:
-                    self.path_length_2500 = self.cost_to_come(self.goal)
-                    self.path_2500 = self.reconstruct_path()
             if self.map.is_valid(q_nearest, q_new):
                 neighbors = self.neighborhood(q_new)
                 q_best = self.best_parent(q_new, neighbors)
-                self.V.append(q_new)
+                if q_new not in self.V:
+                    self.V.append(q_new)
+                if q_best is None:
+                    print("No valid parent found for new node.")
                 self.E[q_new] = [q_best,self.cost_to_come(q_best) + np.linalg.norm(np.array(q_new) - np.array(q_best))]
                 if q_new != self.goal:
                     self.rewire(q_new, neighbors)
             if  q_new == self.goal:
                 self.goal_found = True
+            
+            if i in [499, 999, 2499]:
+                self.get_stats(i)
                 # print(f"Goal reached with {i} iterations!")
         print('Search complete.')
         if self.goal_found:
@@ -174,10 +195,10 @@ class RRT_star:
         path.reverse()
         return path
 
-    def plot_path(self, path, fig_name="rrt_path.pdf"):
+    def plot_path(self, path, E, V, fig_name="rrt_path.pdf"):
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
-        xs, ys = zip(*self.V)
+        xs, ys = zip(*V)
         ax.scatter(xs, ys, c='blue', s=5)
         if path:
             path_xs, path_ys = zip(*path)
@@ -185,7 +206,7 @@ class RRT_star:
         plt.scatter([self.start[0]], [self.start[1]], c='green', s=50, label='Start')
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
         #plotting the entire tree
-        for child, (parent, _) in self.E.items():
+        for child, (parent, _) in E.items():
             plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         plt.legend()
         plt.savefig(fig_name)
