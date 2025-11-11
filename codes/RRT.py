@@ -70,7 +70,8 @@ class RRT:
             q_nearest = self.nearest(q_rand)
             q_new = self.steer(q_nearest, q_rand)
             if self.map.is_valid(q_nearest, q_new):
-                self.V.append(q_new)
+                if q_new not in self.V:
+                    self.V.append(q_new)
                 self.E[q_new] = [q_nearest,np.linalg.norm(np.array(q_new) - np.array(q_nearest))]
             i += 1
             if  q_new == self.goal:
@@ -95,7 +96,7 @@ class RRT:
         path.reverse()
         return path
     
-    def plot_path(self, path, fig_name="rrt_path.png"):
+    def plot_path(self, path, fig_name="rrt_path.pdf"):
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
         xs, ys = zip(*self.V)
@@ -109,7 +110,7 @@ class RRT:
             plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         plt.legend()
         plt.savefig(fig_name)
-        plt.show()
+        # plt.show()
 
 if __name__ == "__main__":
     rrt = RRT(start=(25, 50), goal=(75, 50), map_type=1)

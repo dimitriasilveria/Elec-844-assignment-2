@@ -171,7 +171,7 @@ class RRT_connect:
         path_goal.append(self.goal)
         return path_start + path_goal
 
-    def plot_path(self, path, fig_name="rrt_path.png"):
+    def plot_path(self, path, fig_name="rrt_path.pdf"):
         if path is None:
             print("No path to plot.")
             return
@@ -190,7 +190,7 @@ class RRT_connect:
             plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
         plt.legend()
         plt.savefig(fig_name)
-        plt.show()
+        # plt.show()
 
 if __name__ == "__main__":
     rrt = RRT_connect(start=(25, 50), goal=(75, 50), map_type=1)

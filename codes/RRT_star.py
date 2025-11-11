@@ -12,6 +12,7 @@ class RRT_star:
         self.goal = goal
         self.epsilon = epsilon
         self.step = step
+        self.goal_tolerance = 1e-3
         self.map_height = 100
         self.map_width = 100
         self.path_length_500 = np.inf
@@ -160,14 +161,14 @@ class RRT_star:
             if self.map.is_valid(q_nearest, q_new):
                 neighbors = self.neighborhood(q_new)
                 q_best = self.best_parent(q_new, neighbors)
-                if q_new not in self.V:
+                if q_new not in self.V and q_best is not None:
                     self.V.append(q_new)
-                if q_best is None:
-                    print("No valid parent found for new node.")
-                self.E[q_new] = [q_best,self.cost_to_come(q_best) + np.linalg.norm(np.array(q_new) - np.array(q_best))]
+                    self.E[q_new] = [q_best,self.cost_to_come(q_best) + np.linalg.norm(np.array(q_new) - np.array(q_best))]
+                else:
+                    continue
                 if q_new != self.goal:
                     self.rewire(q_new, neighbors)
-            if  q_new == self.goal:
+            if  np.linalg.norm(np.array(q_new) - np.array(self.goal)) <= self.goal_tolerance:
                 self.goal_found = True
             
             if i in [499, 999, 2499]:
@@ -218,11 +219,13 @@ class RRT_star:
         fig, ax = plt.subplots()
         ax = self.map.display(ax)
         xs, ys = zip(*self.V)
+        for child, (parent, _) in self.E.items():
+            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
+            
         ax.scatter(xs, ys, c='blue', s=5)
         plt.scatter([self.start[0]], [self.start[1]], c='green', s=50, label='Start')
         plt.scatter([self.goal[0]], [self.goal[1]], c='orange', s=50, label='Goal')
-        for child, (parent, _) in self.E.items():
-            plt.plot([child[0], parent[0]], [child[1], parent[1]], c='gray', linewidth=0.5)
+
         plt.legend()
         plt.savefig(fig_name)
         plt.close()

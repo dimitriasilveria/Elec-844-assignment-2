@@ -4,7 +4,8 @@ import yaml
 import statistics
 import os
 import matplotlib.pyplot as plt
-from icecream import ic
+plt.rcParams.update({'font.size': 14})
+# from icecream import ic
 
 def get_first_quartile(data):
     #this function assumes sorted data
@@ -40,7 +41,7 @@ if __name__ == "__main__":
 
     #l =  25
    
-    n_trials = 100
+    n_trials = 10
     l = 25
     iterations = []
     vertices = []
@@ -53,11 +54,11 @@ if __name__ == "__main__":
         print(f"Starting trial {i+1}")
         rrt = RRT_star(start=(25, 50), goal=(75, 50), map_type=1, l=l)
         path, iter_count = rrt.search(seed=2*i)
-        if not has_plots and rrt.path_500 is not None:
+        # if not has_plots and rrt.path_500 is not None:# and i%5 == 0:
 
-            rrt.plot_path(rrt.path_500, rrt.E_500, rrt.V_500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_500_trial_{i+1}.pdf")
-            rrt.plot_path(rrt.path_1000, rrt.E_1000, rrt.V_1000, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_1000_trial_{i+1}.pdf")
-            rrt.plot_path(rrt.path_2500, rrt.E_2500, rrt.V_2500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_2500_trial_{i+1}.pdf")
+        #     rrt.plot_path(rrt.path_500, rrt.E_500, rrt.V_500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_500_trial_{i+1}.pdf")
+        #     rrt.plot_path(rrt.path_1000, rrt.E_1000, rrt.V_1000, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_1000_trial_{i+1}.pdf")
+        #     rrt.plot_path(rrt.path_2500, rrt.E_2500, rrt.V_2500, fig_name=f"{rrt.pictures_dir}/rrt_star_path_iter_2500_trial_{i+1}.pdf")
             # has_plots = True
         iterations.append(iter_count)
         vertices.append(len(rrt.V))
@@ -88,19 +89,30 @@ if __name__ == "__main__":
     #calculating statistics for path lengths
 
     percentage_500, percentage_1000, percentage_2500 = find_percentage_trials(n_trials, path_lengths_500, path_lengths_1000, path_lengths_2500)
-    median = statistics.median(sol_length)
-    first_quartile = get_first_quartile(sol_length)
-    third_quartile = get_third_quartile(sol_length)
-    median_vertices = statistics.median(vertices)
+    median_500 = statistics.median(path_lengths_500)
+    first_quartile_500 = get_first_quartile(path_lengths_500)
+    third_quartile_500 = get_third_quartile(path_lengths_500)
+    median_1000 = statistics.median(path_lengths_1000)
+    first_quartile_1000 = get_first_quartile(path_lengths_1000)
+    third_quartile_1000 = get_third_quartile(path_lengths_1000)
+    median_2500 = statistics.median(path_lengths_2500)
+    first_quartile_2500 = get_first_quartile(path_lengths_2500)
+    third_quartile_2500 = get_third_quartile(path_lengths_2500)
+
 
     # Save the results to a YAML file
     results_dict = {
         'l': str(l),
         'n_trials': str(n_trials),
-        'vertices': str(median_vertices),
-        'solution_lengths': str(median),
-        'first_quartile_solution_length': str(first_quartile),
-        'third_quartile_solution_length': str(third_quartile),
+        'median_500': str(median_500),
+        'first_quartile_500': str(first_quartile_500),
+        'third_quartile_500': str(third_quartile_500),
+        'median_1000': str(median_1000),
+        'first_quartile_1000': str(first_quartile_1000),
+        'third_quartile_1000': str(third_quartile_1000),
+        'median_2500': str(median_2500),
+        'first_quartile_2500': str(first_quartile_2500),
+        'third_quartile_2500': str(third_quartile_2500),
         'percentage_trials_no_path_500_iterations': str(percentage_500),
         'percentage_trials_no_path_1000_iterations': str(percentage_1000),
         'percentage_trials_no_path_2500_iterations': str(percentage_2500),
@@ -117,10 +129,21 @@ if __name__ == "__main__":
     path_lengths_2500_sorted = [v for v in path_lengths_2500 if v != np.inf]
     num_infinite_2500 = sum(v == np.inf for v in path_lengths_2500)
     #plotting histograms
+
+    x_min_500 = min(path_lengths_500_sorted) if path_lengths_500_sorted else None
+    x_max_500 = max(path_lengths_500_sorted) if path_lengths_500_sorted else None
+    x_min_1000 = min(path_lengths_1000_sorted) if path_lengths_1000_sorted else None
+    x_max_1000 = max(path_lengths_1000_sorted) if path_lengths_1000_sorted else None
+    x_min_2500 = min(path_lengths_2500_sorted) if path_lengths_2500_sorted else None
+    x_max_2500 = max(path_lengths_2500_sorted) if path_lengths_2500_sorted else None
+    x_min = min(filter(None, [x_min_500, x_min_1000, x_min_2500]))
+    x_max = max(filter(None, [x_max_500, x_max_1000, x_max_2500]))
+
     plt.figure()
     counts, bins, patches = plt.hist(path_lengths_500_sorted, bins=10, color='blue', alpha=0.7)
     inf_bin_position = bins[-1] + (bins[-1] - bins[-2])
     plt.bar(inf_bin_position, num_infinite_500, width=(bins[-1] - bins[-2]), color='blue', alpha=0.7, edgecolor='black')
+    plt.xlim(x_min, x_max)
     plt.xticks(list(bins) + [inf_bin_position], [f"{b:.2f}" for b in bins] + [r'$\infty$'], rotation=45)
     plt.title(f'Histogram of Path Lengths at 500 Iterations')
     plt.xlabel('Path Length')
@@ -131,6 +154,7 @@ if __name__ == "__main__":
     counts, bins, patches = plt.hist(path_lengths_1000_sorted, bins=10, color='blue', alpha=0.7)
     inf_bin_position = bins[-1] + (bins[-1] - bins[-2])
     plt.bar(inf_bin_position, num_infinite_1000, width=(bins[-1] - bins[-2]), color='blue', alpha=0.7, edgecolor='black')
+    plt.xlim(x_min, x_max)
     plt.xticks(list(bins) + [inf_bin_position], [f"{b:.2f}" for b in bins] + [r'$\infty$'], rotation=45)
     plt.title(f'Histogram of Path Lengths at 1000 Iterations')
     plt.xlabel('Path Length')
@@ -141,6 +165,7 @@ if __name__ == "__main__":
     counts, bins, patches = plt.hist(path_lengths_2500_sorted, bins=10, color='blue', alpha=0.7)
     inf_bin_position = bins[-1] + (bins[-1] - bins[-2])
     plt.bar(inf_bin_position, num_infinite_2500, width=(bins[-1] - bins[-2]), color='blue', alpha=0.7, edgecolor='black')
+    plt.xlim(x_min, x_max)
     plt.xticks(list(bins) + [inf_bin_position], [f"{b:.2f}" for b in bins] + [r'$\infty$'], rotation=45)
     plt.title(f'Histogram of Path Lengths at 2500 Iterations')
     plt.xlabel('Path Length')

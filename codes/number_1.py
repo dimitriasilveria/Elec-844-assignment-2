@@ -1,9 +1,10 @@
-from RRT_star import RRT_star
+from RRT import RRT
 import numpy as np
 import yaml
 import statistics
 import os
 import matplotlib.pyplot as plt
+plt.rcParams.update({'font.size': 14})
 
 if __name__ == "__main__":
 
@@ -15,7 +16,7 @@ if __name__ == "__main__":
     vertices_dict = {}
     sol_length_dict = {}
     for i in range(n_trials):
-        rrt = RRT_star(start=(25, 50), goal=(75, 50), map_type=1, l=l)
+        rrt = RRT(start=(25, 50), goal=(75, 50), map_type=1, l=l)
         path, iterations = rrt.search(seed=i)
         iterations_dict[i] = iterations
         vertices_dict[i] = len(rrt.V)
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     with open(f"results_number_1/results_l_{l}.yaml", "w") as f:
         yaml.dump(results_dict, f)
 
-    rrt.plot_path(path, fig_name=f"pictures_number_1/rrt_path_l_{l}.png")
+    rrt.plot_path(path, fig_name=f"pictures_number_1/rrt_path_l_{l}.pdf")
 
     #sorting dictionaries to plot histograms
     iterations_sorted = dict(sorted(iterations_dict.items(), key=lambda item: item[1]))
@@ -56,14 +57,14 @@ if __name__ == "__main__":
     plt.title(f'Histogram of Iterations to Reach Goal (l={l})')
     plt.xlabel('Iterations')
     plt.ylabel('Frequency')
-    plt.savefig(f"pictures_number_1/iterations_histogram_l_{l}.png")
+    plt.savefig(f"pictures_number_1/iterations_histogram_l_{l}.pdf")
     
     plt.figure()
     plt.hist(vertices_sorted.values(), bins=20, color='green', alpha=0.7)
     plt.title(f'Histogram of Number of Vertices (l={l})')
     plt.xlabel('Number of Vertices')
     plt.ylabel('Frequency')
-    plt.savefig(f"pictures_number_1/vertices_histogram_l_{l}.png")
+    plt.savefig(f"pictures_number_1/vertices_histogram_l_{l}.pdf")
 
     #l = 2 
     l = 4
@@ -99,26 +100,42 @@ if __name__ == "__main__":
     with open(f"results_number_1/results_l_{l}.yaml", "w") as f:
         yaml.dump(results_dict, f)
 
-    rrt.plot_path(path, fig_name=f"pictures_number_1/rrt_path_l_{l}.png")
+    rrt.plot_path(path, fig_name=f"pictures_number_1/rrt_path_l_{l}.pdf")
 
     #sorting dictionaries to plot histograms
     iterations_sorted = dict(sorted(iterations_dict.items(), key=lambda item: item[1]))
     vertices_sorted = dict(sorted(vertices_dict.items(), key=lambda item: item[1]))
     sol_length_sorted = dict(sorted(sol_length_dict.items(), key=lambda item: item[1]))
+    
+    #saving histograms in yaml files
+    histograms_dict = {
+        'iterations_histogram': str(iterations_sorted),
+        'vertices_histogram': str(vertices_sorted)
+    }
+    with open(f"results_number_1/histograms_l_{l}.yaml", "w") as f:
+        yaml.dump(histograms_dict, f)
     #plotting histograms
 
+    x_min_iter = min(iterations_sorted.values())
+    x_max_iter = max(iterations_sorted.values())
+    x_min_vert = min(vertices_sorted.values())
+    x_max_vert = max(vertices_sorted.values())
+    x_min = min(x_min_iter, x_min_vert)
+    x_max = max(x_max_iter, x_max_vert)
     plt.figure()
-    plt.hist(iterations_sorted.values(), bins=20, color='blue', alpha=0.7)
+    plt.hist(iterations_sorted.values(), bins=10, color='blue', alpha=0.7)
+    plt.xlim(x_min, x_max)
     plt.title(f'Histogram of Iterations to Reach Goal (l={l})')
     plt.xlabel('Iterations')
     plt.ylabel('Frequency')
-    plt.savefig(f"pictures_number_1/iterations_histogram_l_{l}.png")
+    plt.savefig(f"pictures_number_1/iterations_histogram_l_{l}.pdf")
     
     plt.figure()
-    plt.hist(vertices_sorted.values(), bins=20, color='green', alpha=0.7)
+    plt.hist(vertices_sorted.values(), bins=10, color='green', alpha=0.7)
+    plt.xlim(x_min, x_max)
     plt.title(f'Histogram of Number of Vertices (l={l})')
     plt.xlabel('Number of Vertices')
     plt.ylabel('Frequency')
-    plt.savefig(f"pictures_number_1/vertices_histogram_l_{l}.png")
+    plt.savefig(f"pictures_number_1/vertices_histogram_l_{l}.pdf")
 
     plt.show()
